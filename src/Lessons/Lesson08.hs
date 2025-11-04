@@ -7,6 +7,15 @@ module Lessons.Lesson08 (fio) where
 import Data.Char
 import Control.Applicative
 
+-- | IO, STM, Maybe, Either, [] are all Functors and Mondads
+-- In order to become a monad - byte operation and return method
+-- In order to become a functor - fmap method
+-- Monad -> Applicative -> Functor
+-- monad - daryk kazka priklausomai nuo to kas yra dezuteje
+-- applicative - paimk dvi dezutes ir is ju kazka naujo
+-- functor - su fmap - viena dezute pritaikyk kitai
+
+-- FUNCTOR list
 -- >>> fl
 -- [5,4]
 fl :: [Int]
@@ -19,6 +28,7 @@ fm = fmap (+1) Nothing
 
 -- >>> fe
 -- Right 42
+-- Left side is fixed
 fe :: Either String Integer
 fe = fmap (+1) $ Right 41
 
@@ -27,9 +37,14 @@ fe = fmap (+1) $ Right 41
 fe' :: Either Integer Integer
 fe' = fmap (+1) $ Left 41
 
+-- getLine takes input from console and returns IO String
 fio :: IO String
 fio = fmap (\a -> a ++ "!") getLine
 
+
+-- APPLICATIVE
+-- pure and return are the same - put a value into a context
+-- takes pure value and makes it into applicative context 4 -> [4]
 -- >>> p
 -- [5]
 p :: [Integer]
@@ -37,6 +52,8 @@ p = pure 5
 
 -- >>> am
 -- Just 46
+-- <$> infix fpamp for applicative
+-- <*> infix operator to apply functions in applicative context to values in applicative context
 am :: Maybe Integer
 am = (+) <$> (Just 5) <*> (Just 41)
 
@@ -61,17 +78,22 @@ am'' = (\a b c -> a + b + c) <$> (Just 5) <*> Nothing <*> (Just 1)
 
 -- >>> al
 -- [2,3,3,4,4,5]
+-- sources are independent
 al :: [Integer]
 al = (+) <$> [1,2,3] <*> [1, 2]
 
 -- >>> ml
 -- [2,3,3,4,4,5]
+-- bined function
+-- thats how and2 and3 works
 ml :: [Integer]
 ml = do
     a <- [1,2,3]
     b <- [1, 2]
     pure $ a + b
 
+-- newtype is used to define our own types with single constructor
+-- throws away wrapping structure, operate in inner fields
 newtype Parser a = Parser {
     runParser :: String -> Either String (a, String)
 }
