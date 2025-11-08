@@ -14,6 +14,11 @@ import Control.Monad.IO.Class(liftIO)
 import Control.Monad
 import Data.Foldable
 
+
+-- | sequence - monad, sequenceA - Applicative
+-- mplus - monad with alternatives
+-- treversable - list, maybe is traversable
+-- foldable - foldl, foldr, fold. Go through all elements and combine them into one value.
 -- >>> sequenceA [Just 42, Just 5]
 -- Just [42,5]
 
@@ -44,9 +49,13 @@ import Data.Foldable
 -- >>> :t sequenceA [getLine, getLine, getLine]
 -- sequenceA [getLine, getLine, getLine] :: IO [String]
 
+
+-- list of IO actions -> IO action returning list of results
 -- >>> :t [getLine, getLine, getLine]
 -- [getLine, getLine, getLine] :: [IO String]
 
+-- read wraps String into IO String
+-- returns IO action that when executed will read a line from console
 queryAge :: String -> IO Integer
 queryAge name = do
     putStrLn $ "What is your age, " ++ name ++ "?"
@@ -61,9 +70,13 @@ queryAge name = do
 -- >>> :t mapM_ queryAge ["VI", "A", "U"]
 -- mapM_ queryAge ["VI", "A", "U"] :: IO ()
 
+-- underscore version ignores the result
+-- function acts as a way to start computation with side effects, does not bring any result
+-- IO ()
 -- >>> :t forM_ ["VI", "A", "U"] queryAge
 -- forM_ ["VI", "A", "U"] queryAge :: IO ()
 
+-- lifts function to monadic function
 -- >>> liftM2 (+) (Just 4) (Just 6)
 -- Just 10
 
@@ -85,46 +98,70 @@ queryAge name = do
 -- >>> :t runParser (sequenceA [threeLetters, threeLetters, threeLetters])
 -- runParser (sequenceA [threeLetters, threeLetters, threeLetters]) :: String -> Either String ([String], String)
 
+-- any program is traversable - tokia minti sove
 -- >>> runParser (sequenceA [threeLetters, threeLetters, threeLetters]) "asdasdasd!"
 -- Right (["asd","asd","asd"],"!")
 
+-- aprasau parseri, kuris turi Monad instance
+-- Parser yra monadas, nes Parser yra Applicative ir Applicative yra Functor
+-- monad negali egzistuoti be Applicative ir Functor
+-- pvz functor gali papuosti sumustini (naudodamas fmap)
+-- applicative gali paimti du sumustinius ir sujungti juos i nauja sumustini
+-- monad gali paimti viena sumustini, atidaryti ji, pasiimti is jo reiksme ir su ja kazka daryti
 instance Monad Parser where
+    -- >>= bind operator for chaining monadic operations
     (>>=) :: Parser a -> (a -> Parser b) -> Parser b
+    -- vienas parseris ivykdo, paima rezultata ir paduoda kita parseriui
+    -- priimam input, paleidziam pirma parseri
+    -- jei pirmas parseris nepavyko, grazinam klaida
+    -- jei pavyko, paimam rezultata ir likusi inputa
+    -- ir paleidziam antra parseri su rezultatu is pirmo parserio
     ma >>= mf = Parser $ \input ->
         case runParser ma input of
             Left e1 -> Left e1
             Right (a, r1) ->
+                -- paduodam rezultata is pirmo parserio i mf
+                -- ir remaining dali
                 case runParser (mf a) r1 of
                     Left e2 -> Left e2
                     Right (b, r2) -> Right (b, r2)
 
 -- >>> runParser threeThreeLetterWords "asdasdasd!"
 -- Right (["asd","asd","asd"],"!")
-threeThreeLetterWords:: Parser [String]
+threeThreeLetterWords :: Parser [String]
 threeThreeLetterWords = do
-    a <- threeLetters
+    a <- threeLetters -- grazina String
     b <- threeLetters
     c <- threeLetters
-    pure [a, b, c]
+    pure [a, b, c] -- grazina Parser [String]
 
 -- >>> runState stateful "initial"
 -- (7,"I am a new state")
-stateful :: State String Int
+-- State s a - s -> (a, s)
+-- runState :: State s a -> s -> (a, s) 
+-- tai yra laukas autmatiskai sukurtas newtype State s a = StateT s Identity a
+stateful :: State String Int -- State monadas, kuri laiko String busena ir grazina Int
 stateful = do
-    value <- get
-    put "I am a new state"
-    pure $ length value
+    value <- get -- paimamas esamas state'as pvz initial
+    put "I am a new state" -- pakeiciam busena i tokia
+    pure $ length value -- graziname ilgi seno state
 
 -- >>> runState combined "initial"
 -- ((7,16),"I am a new state")
 combined :: State String (Int, Int)
 combined = do
-    a <- stateful
-    b <- stateful
-    pure (a, b)
+    a <- stateful -- grazina int
+    b <- stateful -- grazina int 
+    pure (a, b) -- grazina pora int'u liste????
 
 -- >>> runState combined' "initial"
 -- ((7,16),"I am a new state")
+-- combined applicative version
+-- <$> pritaiko stateful pirmai reiksmei
+-- <$> infix version of fmap
+-- <*> pritaiko stateful antrai reiksmei
+-- <*> infix operator to apply functions in applicative context to values in applicative context
+-- (,) sujungia i pora
 combined' :: State String (Int, Int)
 combined' = (,) <$>  stateful <*> stateful
 
