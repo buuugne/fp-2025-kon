@@ -1,4 +1,4 @@
-{-# LANGUAGE GADTs #-}
+{-# LANGUAGE GADTs #-} -- strict, negalima naudotis begaliniais sarasais
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE InstanceSigs #-}
 
@@ -7,11 +7,18 @@ module Lessons.Lesson11 () where
 import Control.Exception
 import Control.DeepSeq
 
+-- error :: String -> a 
+-- bottom reiksme - niekad neateina, nes iskvieciama error funkcija
 foo :: Integer
-foo = error "Oops"
+foo = error "Oops" -- apsimeta integeriu
 
+-- return :: a -> IO a
+-- +> typeclass constraint (veikia tik tada kai yra instance to typeclass)
+-- siuo atveju Exception e
+-- try :: Exception e => IO a -> IO (Either e a)
+-- try leidzia pagauti klaidas IO kontekste
 c :: Exception e => IO (Either e Integer)
-c = try (return (error "Ooops"))
+c = try (return (error "Ooops")) -- return grazina IO kontekste, bet error sukelia klaida
 
 -- >>> eager
 -- oj
@@ -31,12 +38,12 @@ lazy' = length [error "ooops"]
 -- >>> lazy''
 -- ooops
 lazy'' :: [Integer]
-lazy'' = take 1 [error "ooops"]
+lazy'' = take 1 [error "ooops"] -- take tik paima, neivertina
 
 -- >>> first 10
 -- [1,2,3,4,5,6,7,8,9,10]
 first :: Int -> [Integer]
-first n = take n [1..]
+first n = take n [1..] --  begalinis sarasas
 
 -- >>> seq 4 5
 -- 5
@@ -67,7 +74,7 @@ prog1 = Neg (Add (Lit 5) (Add (Lit 4) (Lit 6)))
 -- -15
 eval :: Expr -> Integer
 eval (Lit i) = i
-eval (Add e1 e2) = (eval e1) + (eval e2)
+eval (Add e1 e2) = (eval e1) + (eval e2) -- rekursyviai paziuri abi puses ir sudedi
 eval (Mul e1 e2) = (eval e1) * (eval e2)
 eval (Neg e) = - (eval e)
 
