@@ -36,6 +36,7 @@ ghc-options:
 library:
   source-dirs: src
   dependencies:
+    - deepseq
     - QuickCheck
     - random
     - stm
@@ -86,3 +87,5 @@ tests:
     - fp2025
     - tasty
     - tasty-hunit
+    - tasty-quickcheck
+    - transformers
