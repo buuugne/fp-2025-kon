@@ -7,13 +7,18 @@ import Control.Monad.Trans.State.Strict (State, get, put, runState)
 
 import Lessons.Lesson11 (Expr(..), eval)
 
+-- next - some action
+-- we calculate an expression, get integer result, and pass it to next action
 data MyDomainAlgebra next = Calculate Expr (Integer -> next)
-                          | Store Integer (() -> next)
-                          | Restore (Integer -> next)
+                          | Store Integer (() -> next) -- store integer, then continue with next action
+                          | Restore (Integer -> next) -- restore integer, then continue with next action
 
 -- >>> fmap (+5) (Just 5)
 -- Just 10
 
+-- changing inner function
+-- derives these instances automatically
+-- free monad requires Functor instance
 instance Functor MyDomainAlgebra where
   fmap :: (a -> b) -> MyDomainAlgebra a -> MyDomainAlgebra b
   fmap f (Calculate e next) = Calculate e (\a -> f (next a))
@@ -22,6 +27,7 @@ instance Functor MyDomainAlgebra where
 
 type MyDomain a = Free MyDomainAlgebra a
 
+-- free is a steps builder ??? means free is not a finished computation, but a sequence of steps to be interpreted later
 calculte :: Expr -> MyDomain Integer
 calculte e = Free (Calculate e Pure)
 
